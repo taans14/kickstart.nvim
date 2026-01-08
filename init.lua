@@ -1,97 +1,15 @@
---[[
+vim.g.loaded_netrw = 1
+vim.g.loaded_netrwPlugin = 1
 
-=====================================================================
-==================== READ THIS BEFORE CONTINUING ====================
-=====================================================================
-========                                    .-----.          ========
-========         .----------------------.   | === |          ========
-========         |.-""""""""""""""""""-.|   |-----|          ========
-========         ||                    ||   | === |          ========
-========         ||   KICKSTART.NVIM   ||   |-----|          ========
-========         ||                    ||   | === |          ========
-========         ||                    ||   |-----|          ========
-========         ||:Tutor              ||   |:::::|          ========
-========         |'-..................-'|   |____o|          ========
-========         `"")----------------(""`   ___________      ========
-========        /::::::::::|  |::::::::::\  \ no mouse \     ========
-========       /:::========|  |==hjkl==:::\  \ required \    ========
-========      '""""""""""""'  '""""""""""""'  '""""""""""'   ========
-========                                                     ========
-=====================================================================
-=====================================================================
+-- optionally enable 24-bit colour
+vim.opt.termguicolors = true
 
-What is Kickstart?
-
-  Kickstart.nvim is *not* a distribution.
-
-  Kickstart.nvim is a starting point for your own configuration.
-    The goal is that you can read every line of code, top-to-bottom, understand
-    what your configuration is doing, and modify it to suit your needs.
-
-    Once you've done that, you can start exploring, configuring and tinkering to
-    make Neovim your own! That might mean leaving Kickstart just the way it is for a while
-    or immediately breaking it into modular pieces. It's up to you!
-
-    If you don't know anything about Lua, I recommend taking some time to read through
-    a guide. One possible example which will only take 10-15 minutes:
-      - https://learnxinyminutes.com/docs/lua/
-
-    After understanding a bit more about Lua, you can use `:help lua-guide` as a
-    reference for how Neovim integrates Lua.
-    - :help lua-guide
-    - (or HTML version): https://neovim.io/doc/user/lua-guide.html
-
-Kickstart Guide:
-
-  TODO: The very first thing you should do is to run the command `:Tutor` in Neovim.
-
-    If you don't know what this means, type the following:
-      - <escape key>
-      - :
-      - Tutor
-      - <enter key>
-
-    (If you already know the Neovim basics, you can skip this step.)
-
-  Once you've completed that, you can continue working through **AND READING** the rest
-  of the kickstart init.lua.
-
-  Next, run AND READ `:help`.
-    This will open up a help window with some basic information
-    about reading, navigating and searching the builtin help documentation.
-
-    This should be the first place you go to look when you're stuck or confused
-    with something. It's one of my favorite Neovim features.
-
-    MOST IMPORTANTLY, we provide a keymap "<space>sh" to [s]earch the [h]elp documentation,
-    which is very useful when you're not exactly sure of what you're looking for.
-
-  I have left several `:help X` comments throughout the init.lua
-    These are hints about where to find more information about the relevant settings,
-    plugins or Neovim features used in Kickstart.
-
-   NOTE: Look for lines like this
-
-    Throughout the file. These are for you, the reader, to help you understand what is happening.
-    Feel free to delete them once you know what you're doing, but they should serve as a guide
-    for when you are first encountering a few different constructs in your Neovim config.
-
-If you experience any errors while trying to install kickstart, run `:checkhealth` for more info.
-
-I hope you enjoy your Neovim journey,
-- TJ
-
-P.S. You can delete this when you're done too. It's your config now! :)
---]]
-
--- Set <space> as the leader key
--- See `:help mapleader`
 --  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
-vim.g.mapleader = ' '
-vim.g.maplocalleader = ' '
+-- vim.g.mapleader = ' '
+-- vim.g.maplocalleader = ' '
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
-vim.g.have_nerd_font = false
+vim.g.have_nerd_font = true
 
 -- [[ Setting options ]]
 -- See `:help vim.o`
@@ -199,6 +117,9 @@ vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right win
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
+-- Make Ctrl-c behave exactly like Esc to trigger InsertLeave
+vim.keymap.set('i', '<C-c>', '<Esc>')
+
 -- NOTE: Some terminals have colliding keymaps or are not able to send distinct keycodes
 -- vim.keymap.set("n", "<C-S-h>", "<C-w>H", { desc = "Move window to the left" })
 -- vim.keymap.set("n", "<C-S-l>", "<C-w>L", { desc = "Move window to the right" })
@@ -246,7 +167,186 @@ rtp:prepend(lazypath)
 --
 -- NOTE: Here is where you install your plugins.
 require('lazy').setup({
-  -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
+  {
+    'nvim-tree/nvim-tree.lua',
+    version = '*',
+    lazy = false,
+    dependencies = {
+      'nvim-tree/nvim-web-devicons',
+    },
+    config = function()
+      require('nvim-tree').setup {
+        view = {
+          side = 'right', -- Put tree on the right
+          width = 30, -- Width of the window
+        },
+        actions = {
+          open_file = {
+            quit_on_open = true, -- Optional: close tree when you open a file
+          },
+        },
+        filters = {
+          dotfiles = false,
+        },
+        git = {
+          enable = true,
+          ignore = false,
+          timeout = 500,
+        },
+      }
+
+      -- Map Ctrl-g to Toggle the tree
+      vim.keymap.set('n', '<C-g>', '<cmd>NvimTreeToggle<CR>', { desc = 'Toggle file explorer' })
+    end,
+  },
+  {
+    'akinsho/bufferline.nvim',
+    version = '*',
+    dependencies = 'nvim-tree/nvim-web-devicons',
+    config = function()
+      require('bufferline').setup {
+        options = {
+          -- Enable mouse support
+          mouse = {
+            middle_mouse_command = 'bdelete! %d', -- Middle click to close
+          },
+
+          -- Show LSP errors in the tabline
+          diagnostics = 'nvim_lsp',
+
+          -- Optional: Add an offset if you decide to move NvimTree back to the left
+          -- offsets = { { filetype = "NvimTree", text = "File Explorer", text_align = "left" } },
+        },
+      }
+
+      -- [[ Keymaps ]]
+      local map = vim.keymap.set
+      local opts = { noremap = true, silent = true, desc = 'Bufferline' }
+
+      -- 1. Switch to specific buffer (Alt+1 through Alt+9)
+      for i = 1, 9 do
+        map('n', '<A-' .. i .. '>', '<cmd>BufferLineGoToBuffer ' .. i .. '<CR>', { desc = 'Go to buffer ' .. i })
+      end
+
+      -- 2. Switch Focus (Left/Right)
+      -- Note: <A-,> is Alt + Comma (which has the < symbol)
+      --       <A-.> is Alt + Period (which has the > symbol)
+      map('n', '<A-,>', '<cmd>BufferLineCyclePrev<CR>', { desc = 'Previous Buffer' })
+      map('n', '<A-.>', '<cmd>BufferLineCycleNext<CR>', { desc = 'Next Buffer' })
+
+      -- 3. Move (Re-order) Buffer
+      -- Note: <A-<> is effectively Alt + Shift + Comma
+      --       <A->> is effectively Alt + Shift + Period
+      map('n', '<A-<>', '<cmd>BufferLineMovePrev<CR>', { desc = 'Move buffer left' })
+      map('n', '<A->>', '<cmd>BufferLineMoveNext<CR>', { desc = 'Move buffer right' })
+
+      map('n', '<A-c>', '<cmd>bdelete!<CR>', { desc = 'Close Buffer (Tab)' })
+    end,
+  },
+  {
+    'nvimdev/lspsaga.nvim',
+    event = 'LspAttach', -- Important: Load only when LSP connects
+    dependencies = {
+      'nvim-treesitter/nvim-treesitter',
+      'nvim-tree/nvim-web-devicons',
+    },
+    config = function()
+      -- Modern setup call
+      require('lspsaga').setup {
+        ui = {
+          border = 'rounded',
+        },
+      }
+
+      local opts = { noremap = true, silent = true }
+
+      vim.keymap.set('n', 'K', '<Cmd>Lspsaga hover_doc<CR>', opts)
+      vim.keymap.set('n', 'gd', '<Cmd>Lspsaga finder<CR>', opts) -- Changed from lsp_finder to finder
+      vim.keymap.set('i', '<C-k>', '<Cmd>Lspsaga signature_help<CR>', opts)
+      vim.keymap.set('n', 'gp', '<Cmd>Lspsaga peek_definition<CR>', opts) -- Changed from preview_definition to peek_definition
+      vim.keymap.set('n', 'gr', '<Cmd>Lspsaga rename<CR>', opts)
+    end,
+  },
+  {
+    'MunifTanjim/prettier.nvim',
+    dependencies = {
+      'neovim/nvim-lspconfig',
+      'nvimtools/none-ls.nvim', -- Community fork of null-ls
+    },
+    config = function()
+      local prettier = require 'prettier'
+
+      prettier.setup {
+        bin = 'prettier', -- or 'prettierd' (if installed)
+        filetypes = {
+          'css',
+          'graphql',
+          'html',
+          'javascript',
+          'javascriptreact',
+          'json',
+          'less',
+          'markdown',
+          'scss',
+          'typescript',
+          'typescriptreact',
+          'yaml',
+        },
+        ['null-ls'] = {
+          condition = function()
+            return prettier.config_exists {
+              check_package_json = true,
+            }
+          end,
+          runtime_condition = function(params)
+            -- return false to skip running prettier
+            return true
+          end,
+          timeout = 5000,
+        },
+      }
+    end,
+  },
+  {
+    'windwp/nvim-ts-autotag',
+    config = function()
+      require('nvim-ts-autotag').setup()
+    end,
+  },
+  {
+    'windwp/nvim-autopairs',
+    event = 'InsertEnter',
+    config = true,
+    -- use opts = {} for passing setup options
+    -- this is equivalent to setup({}) function
+  },
+  {
+    'stevearc/oil.nvim',
+    ---@module 'oil'
+    ---@type oil.SetupOpts
+    opts = {},
+    -- Optional dependencies
+    dependencies = { 'nvim-tree/nvim-web-devicons' }, -- use if you prefer nvim-web-devicons
+    lazy = false,
+  },
+  {
+    'christoomey/vim-tmux-navigator',
+    cmd = {
+      'TmuxNavigateLeft',
+      'TmuxNavigateDown',
+      'TmuxNavigateUp',
+      'TmuxNavigateRight',
+      'TmuxNavigatePrevious',
+      'TmuxNavigatorProcessList',
+    },
+    keys = {
+      { '<c-h>', '<cmd><C-U>TmuxNavigateLeft<cr>' },
+      { '<c-j>', '<cmd><C-U>TmuxNavigateDown<cr>' },
+      { '<c-k>', '<cmd><C-U>TmuxNavigateUp<cr>' },
+      { '<c-l>', '<cmd><C-U>TmuxNavigateRight<cr>' },
+      { '<c-\\>', '<cmd><C-U>TmuxNavigatePrevious<cr>' },
+    },
+  },
   'NMAC427/guess-indent.nvim', -- Detect tabstop and shiftwidth automatically
 
   -- NOTE: Plugins can also be added by using a table,
@@ -404,15 +504,16 @@ require('lazy').setup({
       -- [[ Configure Telescope ]]
       -- See `:help telescope` and `:help telescope.setup()`
       require('telescope').setup {
-        -- You can put your default mappings / updates / etc. in here
-        --  All the info you're looking for is in `:help telescope.setup()`
-        --
-        -- defaults = {
-        --   mappings = {
-        --     i = { ['<c-enter>'] = 'to_fuzzy_refine' },
-        --   },
-        -- },
-        -- pickers = {}
+        defaults = {
+          -- prevent telescope from searching inside the .git/ folder itself
+          file_ignore_patterns = { '.git/', '.venv/' },
+        },
+        pickers = {
+          find_files = {
+            hidden = true, -- Show dotfiles (e.g. .env, .config)
+            no_ignore = true, -- Show files ignored by .gitignore
+          },
+        },
         extensions = {
           ['ui-select'] = {
             require('telescope.themes').get_dropdown(),
@@ -810,6 +911,13 @@ require('lazy').setup({
       },
       'folke/lazydev.nvim',
     },
+    config = function(_, opts)
+      -- Define the orange color (matches TokyoNight orange)
+      vim.api.nvim_set_hl(0, 'KindOrange', { fg = '#ff9e64', bold = true })
+
+      -- Initialize blink with your options
+      require('blink.cmp').setup(opts)
+    end,
     --- @module 'blink.cmp'
     --- @type blink.cmp.Config
     opts = {
@@ -850,7 +958,21 @@ require('lazy').setup({
       completion = {
         -- By default, you may press `<c-space>` to show the documentation.
         -- Optionally, set `auto_show = true` to show the documentation after a delay.
-        documentation = { auto_show = false, auto_show_delay_ms = 500 },
+        documentation = { auto_show = true, auto_show_delay_ms = 200 },
+        menu = {
+          draw = {
+            columns = {
+              { 'label' },
+              { 'kind', 'label_description', gap = 1 },
+            },
+            components = {
+              kind = {
+                -- 2. Force the highlight to always use our Orange group
+                highlight = 'KindOrange',
+              },
+            },
+          },
+        },
       },
 
       sources = {
@@ -882,7 +1004,7 @@ require('lazy').setup({
     --
     -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
     'folke/tokyonight.nvim',
-    priority = 1000, -- Make sure to load this before all the other start plugins.
+    priority = 998, -- Make sure to load this before all the other start plugins.
     config = function()
       ---@diagnostic disable-next-line: missing-fields
       require('tokyonight').setup {
@@ -897,9 +1019,48 @@ require('lazy').setup({
       vim.cmd.colorscheme 'tokyonight-night'
     end,
   },
+  {
+    'ellisonleao/gruvbox.nvim',
+    name = 'gruvbox',
+    lazy = false,
+    priority = 997,
+    config = function()
+      -- Optional: Set configuration before applying
+      vim.g.gruvbox_contrast_dark = 'dark' -- 'soft', 'medium', 'hard'
+
+      -- Apply the colorscheme
+      vim.cmd 'colorscheme gruvbox'
+    end,
+  },
 
   -- Highlight todo, notes, etc in comments
-  { 'folke/todo-comments.nvim', event = 'VimEnter', dependencies = { 'nvim-lua/plenary.nvim' }, opts = { signs = false } },
+  {
+    'folke/todo-comments.nvim',
+    event = 'VimEnter',
+    dependencies = { 'nvim-lua/plenary.nvim' },
+    opts = {
+      signs = false,
+      keywords = {
+        FIX = {
+          icon = ' ', -- icon used for the sign, and in search results
+          color = 'error', -- can be a hex color, or a named color (see below)
+          alt = { 'FIXME', 'BUG', 'FIXIT', 'ISSUE' }, -- a set of other keywords that all map to this FIX keywords
+          -- signs = false, -- configure signs for some keywords individually
+        },
+        TODO = { icon = ' ', color = 'todo' },
+        HACK = { icon = ' ', color = 'warning' },
+        WARN = { icon = ' ', color = 'warning', alt = { 'WARNING', 'XXX' } },
+        PERF = { icon = ' ', alt = { 'OPTIM', 'PERFORMANCE', 'OPTIMIZE' } },
+        NOTE = { icon = ' ', color = 'hint', alt = { 'INFO' } },
+        TEST = { icon = '⏲ ', color = 'test', alt = { 'TESTING', 'PASSED', 'FAILED' } },
+        DONE = { color = 'done', alt = { 'FINISHED', 'COMPLETE' } },
+      },
+      colors = {
+        done = { 'Done', '#A89984' },
+        todo = { 'Todo', '#98971A' },
+      },
+    },
+  },
 
   { -- Collection of various small independent plugins/modules
     'echasnovski/mini.nvim',
@@ -938,30 +1099,40 @@ require('lazy').setup({
       --  Check out: https://github.com/echasnovski/mini.nvim
     end,
   },
-  { -- Highlight, edit, and navigate code
+  {
     'nvim-treesitter/nvim-treesitter',
     build = ':TSUpdate',
-    main = 'nvim-treesitter.configs', -- Sets main module to use for opts
-    -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
+    lazy = false, -- Force it to load immediately to debug the "not found" issue
     opts = {
-      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },
-      -- Autoinstall languages that are not installed
+      ensure_installed = {
+        'bash',
+        'c',
+        'diff',
+        'html',
+        'lua',
+        'luadoc',
+        'markdown',
+        'markdown_inline',
+        'query',
+        'vim',
+        'vimdoc',
+        'javascript',
+        'typescript',
+        'tsx',
+        'xml',
+      },
       auto_install = true,
       highlight = {
         enable = true,
-        -- Some languages depend on vim's regex highlighting system (such as Ruby) for indent rules.
-        --  If you are experiencing weird indenting issues, add the language to
-        --  the list of additional_vim_regex_highlighting and disabled languages for indent.
         additional_vim_regex_highlighting = { 'ruby' },
       },
       indent = { enable = true, disable = { 'ruby' } },
+      parser_install_dir = vim.fn.stdpath 'data' .. '/lazy/nvim-treesitter/parser',
     },
-    -- There are additional nvim-treesitter modules that you can use to interact
-    -- with nvim-treesitter. You should go explore a few and see what interests you:
-    --
-    --    - Incremental selection: Included, see `:help nvim-treesitter-incremental-selection-mod`
-    --    - Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
-    --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
+    config = function(_, opts)
+      vim.opt.runtimepath:prepend(opts.parser_install_dir)
+      require('nvim-treesitter.configs').setup(opts)
+    end,
   },
 
   -- The following comments only work if you have downloaded the kickstart repo, not just copy pasted the
@@ -1012,5 +1183,44 @@ require('lazy').setup({
   },
 })
 
--- The line beneath this is called `modeline`. See `:help modeline`
--- vim: ts=2 sts=2 sw=2 et
+-- tab setup
+vim.opt.tabstop = 2 -- How wide a tab character looks
+vim.opt.shiftwidth = 2 -- How much indentation changes when you hit >> or <<
+vim.opt.softtabstop = 2 -- How many spaces inserted when you hit <Tab>
+vim.opt.expandtab = true -- Convert tabs to spaces
+
+-- oil setup
+require('oil').setup {
+  keymaps = {
+    ['<C-r>'] = 'actions.refresh',
+    ['<C-i>'] = { 'actions.select', opts = { horizontal = true } },
+    ['<C-l>'] = false,
+    ['<C-h>'] = false,
+  },
+  view_options = {
+    show_hidden = true,
+  },
+}
+vim.keymap.set('n', '-', '<CMD>Oil<CR>', { desc = 'Open parent directory' })
+
+-- relative/absolute line numbers setup
+vim.opt.number = true
+vim.opt.relativenumber = true
+
+local number_toggle_group = vim.api.nvim_create_augroup('NumberToggle', { clear = true })
+
+vim.api.nvim_create_autocmd({ 'InsertEnter' }, {
+  group = number_toggle_group,
+  pattern = '*',
+  callback = function()
+    vim.opt.relativenumber = false
+  end,
+})
+
+vim.api.nvim_create_autocmd({ 'InsertLeave' }, {
+  group = number_toggle_group,
+  pattern = '*',
+  callback = function()
+    vim.opt.relativenumber = true
+  end,
+})
